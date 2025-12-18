@@ -264,6 +264,7 @@ function CatalogList({ items, selectedIid, onSelect, onCreate, onEdit, onDelete,
 type User = { id: number; username: string; role: string; posisi?: string | null; created_at?: string };
 
 export default function App() {
+  const API_BASE = (import.meta.env.VITE_API_URL as string) || (location.port === '3200' ? `${location.protocol}//${location.hostname}:3300` : `${location.protocol}//${location.hostname}:5174`);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [selectedFigureIid, setSelectedFigureIid] = useState<number | null>(null);
   const [selectedPartIds, setSelectedPartIds] = useState<string[]>([]);
@@ -314,30 +315,30 @@ export default function App() {
   const [posisiOptions, setPosisiOptions] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/catalog")
+    fetch(`${API_BASE}/api/catalog`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then((data: Catalog) => {
         setCatalog(data);
         // jangan auto pilih ilustrasi; tampilkan gambar/part hanya setelah klik
       })
       .catch(() => { notify('Gagal memuat katalog', 'error'); });
-    fetch("http://localhost:4000/api/me", { credentials: "include" })
+    fetch(`${API_BASE}/api/me`, { credentials: "include" })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(setUser)
       .catch(() => {})
       .finally(() => setAuthChecked(true));
-    fetch("http://localhost:4000/api/meta/illustrations/jenis-enum")
+    fetch(`${API_BASE}/api/meta/illustrations/jenis-enum`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then((opts: string[]) => setJenisOptions(opts))
       .catch(() => setJenisOptions(["Truck Heavy-duty","Truck Medium-duty","Truck Light-duty"]));
-    fetch("http://localhost:4000/api/meta/illustrations/posisi-enum")
+    fetch(`${API_BASE}/api/meta/illustrations/posisi-enum`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then((opts: string[]) => setPosisiOptions(opts))
       .catch(() => setPosisiOptions(["Engine","Powertrain","Chassis/Tool","Electrical","Cabin/Rear Body"]));
   }, []);
   useEffect(() => {
     const t = setInterval(() => {
-      fetch("http://localhost:4000/api/me", { credentials: "include" })
+      fetch(`${API_BASE}/api/me`, { credentials: "include" })
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(setUser)
         .catch(() => setUser(null));
@@ -372,7 +373,7 @@ export default function App() {
     const local = (current?.parts ?? []).find(p => p.id === s);
     if (local) { onSuccess(local); return; }
 
-    fetch('http://localhost:4000/api/parts')
+    fetch(`${API_BASE}/api/parts`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then((rows: Part[]) => {
         const idx: Record<string, Part> = {};
@@ -444,14 +445,14 @@ export default function App() {
     >
       <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, padding: "8px 12px", borderBottom: "1px solid #eee" }}>
         <div style={{ marginRight: "auto", fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
-          <img src="/uploads/eparthino.png" alt="Logo" style={{ width: 28, height: 28, objectFit: "contain" }} />
+          <img src="/eparthino.png" alt="Logo" style={{ width: 28, height: 28, objectFit: "contain" }} />
           <span>Part Katalog</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {canWrite && (
             <button className="btn" onClick={() => {
               setLoading(true);
-              fetch('http://localhost:4000/api/users', { credentials: 'include' })
+              fetch(`${API_BASE}/api/users`, { credentials: 'include' })
                 .then(r => r.ok ? r.json() : Promise.reject())
                 .then((rows: User[]) => { setUsersList(rows); setUsersModalOpen(true); })
                 .catch(() => notify('Gagal memuat users', 'error'))
@@ -460,7 +461,7 @@ export default function App() {
           )}
           <button className="btn" onClick={() => {
             setLoading(true);
-            fetch('http://localhost:4000/api/parts')
+            fetch(`${API_BASE}/api/parts`)
               .then(r => r.ok ? r.json() : Promise.reject())
               .then((rows: Part[]) => {
                 setPartsList(rows);
@@ -479,7 +480,7 @@ export default function App() {
           }} style={{ padding: "6px 10px" }}>List Part</button>
         </div>
         <div>{user?.username}</div>
-        <button className="btn" onClick={() => { fetch('http://localhost:4000/api/logout', { method: 'POST', credentials: 'include' }).then(() => setUser(null)); }}>Logout</button>
+        <button className="btn" onClick={() => { fetch(`${API_BASE}/api/logout`, { method: 'POST', credentials: 'include' }).then(() => setUser(null)); }}>Logout</button>
       </div>
       <CatalogList
         items={catalog.illustrations}
@@ -493,16 +494,16 @@ export default function App() {
         }}
         onDelete={(iid) => {
           if (!confirm("Hapus ilustrasi ini?")) return;
-          fetch(`http://localhost:4000/api/illustrations/iid/${iid}`, { method: "DELETE", credentials: "include" })
+          fetch(`${API_BASE}/api/illustrations/iid/${iid}`, { method: "DELETE", credentials: "include" })
             .then(r => r.ok ? r.json() : Promise.reject())
-            .then(() => fetch("http://localhost:4000/api/catalog").then(r => r.json()).then(setCatalog));
+            .then(() => fetch(`${API_BASE}/api/catalog`).then(r => r.json()).then(setCatalog));
         }}
         editor={editor}
         onChangeEditor={(patch) => setEditor(prev => prev ? { ...prev, ...patch } : prev)}
         onUploadImage={(file) => {
           const fd = new FormData();
           fd.append('file', file);
-          fetch('http://localhost:4000/api/upload', { method: 'POST', credentials: 'include', body: fd })
+          fetch(`${API_BASE}/api/upload`, { method: 'POST', credentials: 'include', body: fd })
             .then(r => r.ok ? r.json() : Promise.reject())
             .then(({ path }) => setEditor(prev => prev ? { ...prev, image: path } : prev));
         }}
@@ -511,14 +512,14 @@ export default function App() {
           const { mode, id, iid, name, model, posisi, nama_posisi, no_posisi, image, width, height } = editor;
           if (mode === "create") {
             if (!id || !posisi || !name || !image || !Number.isFinite(width) || !Number.isFinite(height)) return;
-            fetch("http://localhost:4000/api/illustrations", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, name, model: model ?? "", posisi, nama_posisi: nama_posisi ?? "", no_posisi: no_posisi ?? "", image, width, height }) })
+            fetch(`${API_BASE}/api/illustrations`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, name, model: model ?? "", posisi, nama_posisi: nama_posisi ?? "", no_posisi: no_posisi ?? "", image, width, height }) })
               .then(r => r.ok ? r.json() : Promise.reject())
-              .then(() => fetch("http://localhost:4000/api/catalog").then(r => r.json()).then(data => { setCatalog(data); setEditor(null); }));
+              .then(() => fetch(`${API_BASE}/api/catalog`).then(r => r.json()).then(data => { setCatalog(data); setEditor(null); }));
           } else {
             if (!posisi || !name || !image || !Number.isFinite(width) || !Number.isFinite(height) || !Number.isFinite(iid as number)) return;
-            fetch(`http://localhost:4000/api/illustrations/iid/${iid}`, { method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, name, model: model ?? "", posisi, nama_posisi: nama_posisi ?? "", no_posisi: no_posisi ?? "", image, width, height }) })
+            fetch(`${API_BASE}/api/illustrations/iid/${iid}`, { method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, name, model: model ?? "", posisi, nama_posisi: nama_posisi ?? "", no_posisi: no_posisi ?? "", image, width, height }) })
               .then(r => r.ok ? r.json() : Promise.reject())
-              .then(() => fetch("http://localhost:4000/api/catalog").then(r => r.json()).then(data => { setCatalog(data); setEditor(null); }));
+              .then(() => fetch(`${API_BASE}/api/catalog`).then(r => r.json()).then(data => { setCatalog(data); setEditor(null); }));
           }
         }}
         onCancelEditor={() => setEditor(null)}
@@ -547,7 +548,7 @@ export default function App() {
         )}
         {current && (
           <Illustration
-            imageSrc={current.image}
+            imageSrc={current.image && current.image.startsWith('/uploads/') ? `${API_BASE}${current.image}` : current.image}
             size={current.size}
             hotspots={normalizedHotspots}
             parts={current.parts}
@@ -587,9 +588,9 @@ export default function App() {
             onMoveHotspot={(index, x, y) => {
               const next = normalizedHotspots.map((h, i) => i === index ? { ...h, x, y } : h);
               setLoading(true);
-              fetch(`http://localhost:4000/api/illustrations/iid/${current!.iid}/structure`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parts: current!.parts, hotspots: next }) })
+              fetch(`${API_BASE}/api/illustrations/iid/${current!.iid}/structure`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parts: current!.parts, hotspots: next }) })
                 .then(r2 => r2.ok ? r2.json() : Promise.reject())
-                .then(() => fetch(`http://localhost:4000/api/illustrations/iid/${current!.iid}`).then(r3 => r3.json()).then(data => {
+                .then(() => fetch(`${API_BASE}/api/illustrations/iid/${current!.iid}`).then(r3 => r3.json()).then(data => {
                   setCatalog(prev => {
                     if (!prev) return prev;
                     const idx2 = prev.illustrations.findIndex(i => i.iid === current!.iid);
@@ -796,14 +797,14 @@ export default function App() {
                   return next;
                 });
                 setLoading(true);
-                fetch(`http://localhost:4000/api/illustrations/iid/${current!.iid}/structure`, {
+                fetch(`${API_BASE}/api/illustrations/iid/${current!.iid}/structure`, {
                   method: 'PUT',
                   credentials: 'include',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ parts: updated.parts, hotspots: updated.hotspots })
                 })
                   .then(r => r.ok ? r.json() : r.json().catch(() => ({})).then(j => Promise.reject({ status: r.status, error: j?.error })))
-                  .then(() => fetch('http://localhost:4000/api/catalog').then(r => r.json()).then(setCatalog).then(() => notify('Hotspot tersimpan')))
+                  .then(() => fetch(`${API_BASE}/api/catalog`).then(r => r.json()).then(setCatalog).then(() => notify('Hotspot tersimpan')))
                   .catch((err) => {
                     if (err && err.status === 401) notify('Harus login untuk menyimpan', 'error');
                     else if (err && err.status === 400) notify('Data tidak lengkap', 'error');
@@ -858,9 +859,9 @@ export default function App() {
                 const price = Number.isFinite(createPart.price) ? createPart.price : 0;
                 if (!current || !id) return;
                 setLoading(true);
-                fetch(`http://localhost:4000/api/illustrations/iid/${current!.iid}/parts`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ partId: id, code, name, price }) })
+                fetch(`${API_BASE}/api/illustrations/iid/${current!.iid}/parts`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ partId: id, code, name, price }) })
                   .then(r => r.ok ? r.json() : Promise.reject())
-                  .then(() => fetch(`http://localhost:4000/api/illustrations/iid/${current!.iid}`).then(r => r.json()).then(data => {
+                  .then(() => fetch(`${API_BASE}/api/illustrations/iid/${current!.iid}`).then(r => r.json()).then(data => {
                     setCatalog(prev => {
                       if (!prev) return prev;
                       const idx = prev.illustrations.findIndex(i => i.iid === current!.iid);
@@ -896,9 +897,9 @@ export default function App() {
                     const base = partEditMap[p.id] ?? { code: p.code, name: p.name, price: p.price ?? 0 };
                     const patch = { ...base, price: Number.isFinite(base.price) ? Math.max(0, Math.floor(base.price)) : 0 };
                     setLoading(true);
-                    fetch(`http://localhost:4000/api/parts/${p.id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) })
+                    fetch(`${API_BASE}/api/parts/${p.id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) })
                       .then(r => r.ok ? r.json() : Promise.reject())
-                      .then(() => fetch(`http://localhost:4000/api/illustrations/iid/${current!.iid}`).then(r => r.json()).then(data => {
+                      .then(() => fetch(`${API_BASE}/api/illustrations/iid/${current!.iid}`).then(r => r.json()).then(data => {
                         setCatalog(prev => {
                           if (!prev) return prev;
                           const idx = prev.illustrations.findIndex(i => i.iid === current!.iid);
@@ -911,9 +912,9 @@ export default function App() {
                   }}>Simpan</button>
                   <button className="btn" disabled={loading} onClick={() => {
                     setLoading(true);
-                    fetch(`http://localhost:4000/api/illustrations/iid/${current!.iid}/parts/${p.id}`, { method: 'DELETE', credentials: 'include' })
+                    fetch(`${API_BASE}/api/illustrations/iid/${current!.iid}/parts/${p.id}`, { method: 'DELETE', credentials: 'include' })
                       .then(r => r.ok ? r.json() : Promise.reject())
-                      .then(() => fetch(`http://localhost:4000/api/illustrations/iid/${current!.iid}`).then(r => r.json()).then(data => {
+                      .then(() => fetch(`${API_BASE}/api/illustrations/iid/${current!.iid}`).then(r => r.json()).then(data => {
                         setCatalog(prev => {
                           if (!prev) return prev;
                           const idx = prev.illustrations.findIndex(i => i.iid === current!.iid);
@@ -936,9 +937,9 @@ export default function App() {
                     const r = Math.max(1, Math.floor(Number(e.target.value)));
                     const next = normalizedHotspots.map((x, i) => i === idx ? { ...x, r } : x);
                     setLoading(true);
-                    fetch(`http://localhost:4000/api/illustrations/iid/${current!.iid}/structure`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parts: current!.parts, hotspots: next }) })
+                    fetch(`${API_BASE}/api/illustrations/iid/${current!.iid}/structure`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parts: current!.parts, hotspots: next }) })
                       .then(r2 => r2.ok ? r2.json() : Promise.reject())
-                      .then(() => fetch(`http://localhost:4000/api/illustrations/iid/${current!.iid}`).then(r3 => r3.json()).then(data => {
+                      .then(() => fetch(`${API_BASE}/api/illustrations/iid/${current!.iid}`).then(r3 => r3.json()).then(data => {
                         setCatalog(prev => {
                           if (!prev) return prev;
                           const idx2 = prev.illustrations.findIndex(i => i.iid === current!.iid);
@@ -954,9 +955,9 @@ export default function App() {
                   <button className="btn" disabled={loading} onClick={() => {
                     const next = normalizedHotspots.filter((_, i) => i !== idx);
                     setLoading(true);
-                    fetch(`http://localhost:4000/api/illustrations/iid/${current!.iid}/structure`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parts: current!.parts, hotspots: next }) })
+                    fetch(`${API_BASE}/api/illustrations/iid/${current!.iid}/structure`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parts: current!.parts, hotspots: next }) })
                       .then(r2 => r2.ok ? r2.json() : Promise.reject())
-                      .then(() => fetch(`http://localhost:4000/api/illustrations/iid/${current!.iid}`).then(r3 => r3.json()).then(data => {
+                      .then(() => fetch(`${API_BASE}/api/illustrations/iid/${current!.iid}`).then(r3 => r3.json()).then(data => {
                         setCatalog(prev => {
                           if (!prev) return prev;
                           const idx2 = prev.illustrations.findIndex(i => i.iid === current!.iid);
@@ -1036,15 +1037,15 @@ export default function App() {
                           let chain = Promise.resolve();
                           ops.forEach(op => {
                             if (op.exists) {
-                              chain = chain.then(() => fetch(`http://localhost:4000/api/parts/${op.id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: op.code, name: op.name, price: op.price, additional: (op as any).additional ?? '' }) }).then(r => r.ok ? r.json() : Promise.reject()));
+                              chain = chain.then(() => fetch(`${API_BASE}/api/parts/${op.id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: op.code, name: op.name, price: op.price, additional: (op as any).additional ?? '' }) }).then(r => r.ok ? r.json() : Promise.reject()));
                             } else {
-                              chain = chain.then(() => fetch('http://localhost:4000/api/parts', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: op.id, code: op.code, name: op.name, price: op.price, additional: (op as any).additional ?? '' }) }).then(r => r.ok ? r.json() : Promise.reject()));
+                              chain = chain.then(() => fetch(`${API_BASE}/api/parts`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: op.id, code: op.code, name: op.name, price: op.price, additional: (op as any).additional ?? '' }) }).then(r => r.ok ? r.json() : Promise.reject()));
                             }
                           });
                           return chain;
                         })
-                        .then(() => fetch('http://localhost:4000/api/parts').then(r => r.json()).then(rows => { setPartsList(rows); notify('Import selesai'); }))
-                        .then(() => fetch('http://localhost:4000/api/catalog').then(r => r.json()).then(data => { setCatalog(data); }))
+                        .then(() => fetch(`${API_BASE}/api/parts`).then(r => r.json()).then(rows => { setPartsList(rows); notify('Import selesai'); }))
+                        .then(() => fetch(`${API_BASE}/api/catalog`).then(r => r.json()).then(data => { setCatalog(data); }))
                         .catch(() => notify('Gagal import', 'error'))
                         .finally(() => { setLoading(false); if (importFileRef.current) importFileRef.current.value = ''; });
                     }} style={{ padding: "2px 6px", fontSize: 10 }}>Import XLSX</button>
@@ -1104,12 +1105,12 @@ export default function App() {
                                 const base = partsEditMap[p.id] ?? { code: p.code, name: p.name, price: p.price ?? 0 };
                                 const patch = { ...base, price: Number.isFinite(base.price) ? Math.max(0, Math.floor(base.price)) : 0 };
                                 setLoading(true);
-                                fetch(`http://localhost:4000/api/parts/${p.id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) })
+                                fetch(`${API_BASE}/api/parts/${p.id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) })
                                   .then(r => r.ok ? r.json() : Promise.reject())
-                                  .then(() => fetch('http://localhost:4000/api/parts')
+                                  .then(() => fetch(`${API_BASE}/api/parts`)
                                     .then(r => r.json())
                                     .then(rows => { setPartsList(rows); setPartsEditId(null); notify('Part disimpan'); }))
-                                  .then(() => fetch('http://localhost:4000/api/catalog')
+                                  .then(() => fetch(`${API_BASE}/api/catalog`)
                                     .then(r => r.json())
                                     .then(data => { setCatalog(data); }))
                                   .catch(() => notify('Gagal simpan part', 'error'))
@@ -1135,12 +1136,12 @@ export default function App() {
                                     if (user?.role !== 'superadmin') return;
                                     if (!confirm('Hapus part ini?')) return;
                                     setLoading(true);
-                                    fetch(`http://localhost:4000/api/parts/${p.id}`, { method: 'DELETE', credentials: 'include' })
+                                    fetch(`${API_BASE}/api/parts/${p.id}`, { method: 'DELETE', credentials: 'include' })
                                       .then(r => r.ok ? r.json() : Promise.reject())
-                                      .then(() => fetch('http://localhost:4000/api/parts')
+                                      .then(() => fetch(`${API_BASE}/api/parts`)
                                         .then(r => r.json())
                                         .then(rows => { setPartsList(rows); notify('Part dihapus'); }))
-                                      .then(() => fetch('http://localhost:4000/api/catalog')
+                                      .then(() => fetch(`${API_BASE}/api/catalog`)
                                         .then(r => r.json())
                                         .then(data => { setCatalog(data); }))
                                       .catch(() => notify('Gagal hapus part', 'error'))
@@ -1198,9 +1199,9 @@ export default function App() {
                   const { username, role, password, posisi } = usersCreating;
                   if (!username.trim() || !password) return;
                   setLoading(true);
-                  fetch('http://localhost:4000/api/users', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username.trim(), role, password, posisi: posisi || null }) })
+                  fetch(`${API_BASE}/api/users`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username.trim(), role, password, posisi: posisi || null }) })
                     .then(r => r.ok ? r.json() : Promise.reject())
-                    .then(() => fetch('http://localhost:4000/api/users', { credentials: 'include' }).then(r => r.json()).then(rows => { setUsersList(rows); setUsersCreating({ username: '', role: 'user', password: '', posisi: '' }); notify('User dibuat'); }))
+                    .then(() => fetch(`${API_BASE}/api/users`, { credentials: 'include' }).then(r => r.json()).then(rows => { setUsersList(rows); setUsersCreating({ username: '', role: 'user', password: '', posisi: '' }); notify('User dibuat'); }))
                     .catch(() => notify('Gagal membuat user', 'error'))
                     .finally(() => setLoading(false));
                 }} style={{ padding: '2px 6px', fontSize: 10, width: '100%', height: 24, borderRadius: 6, whiteSpace: 'nowrap' }}>Tambah</button>
@@ -1268,9 +1269,9 @@ export default function App() {
                                 const payload: any = { username: base.username, role: base.role, posisi: base.posisi || null };
                                 if (base.password && base.password.length > 0) payload.password = base.password;
                                 setLoading(true);
-                                fetch(`http://localhost:4000/api/users/${u.id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+                                fetch(`${API_BASE}/api/users/${u.id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
                                   .then(r => r.ok ? r.json() : Promise.reject())
-                                  .then(() => fetch('http://localhost:4000/api/users', { credentials: 'include' }).then(r => r.json()).then(rows => { setUsersList(rows); setUsersEditId(null); notify('User disimpan'); }))
+                                  .then(() => fetch(`${API_BASE}/api/users`, { credentials: 'include' }).then(r => r.json()).then(rows => { setUsersList(rows); setUsersEditId(null); notify('User disimpan'); }))
                                   .catch(() => notify('Gagal simpan user', 'error'))
                                   .finally(() => setLoading(false));
                               }} style={{ padding: '2px 4px', fontSize: 12 }}>💾</button>
@@ -1300,9 +1301,9 @@ export default function App() {
                                     if (user?.role === 'admin' && u.role === 'superadmin') return;
                                     if (!confirm('Hapus user ini?')) return;
                                     setLoading(true);
-                                    fetch(`http://localhost:4000/api/users/${u.id}`, { method: 'DELETE', credentials: 'include' })
+                                    fetch(`${API_BASE}/api/users/${u.id}`, { method: 'DELETE', credentials: 'include' })
                                       .then(r => r.ok ? r.json() : Promise.reject())
-                                      .then(() => fetch('http://localhost:4000/api/users', { credentials: 'include' }).then(r => r.json()).then(rows => { setUsersList(rows); notify('User dihapus'); }))
+                                      .then(() => fetch(`${API_BASE}/api/users`, { credentials: 'include' }).then(r => r.json()).then(rows => { setUsersList(rows); notify('User dihapus'); }))
                                       .catch(() => notify('Gagal hapus user', 'error'))
                                       .finally(() => setLoading(false));
                                   }}

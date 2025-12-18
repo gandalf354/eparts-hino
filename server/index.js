@@ -12,7 +12,7 @@ import path from 'node:path';
 let pool;
 
 const app = express();
-const allowedOrigins = new Set(['http://localhost:5173', 'http://localhost:5174']);
+const allowedOrigins = new Set(String(process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:5174,http://localhost:3200').split(',').map(s => s.trim()).filter(Boolean));
 const corsOptions = {
   origin: (origin, cb) => {
     if (!origin) return cb(null, true);
@@ -131,6 +131,8 @@ async function start() {
     res.json({ path: publicPath });
   });
 
+  app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
+
   app.post('/api/login', async (req, res) => {
     const { username, password } = req.body || {};
     if (!username || !password) return res.status(400).json({ error: 'bad_request' });
@@ -231,7 +233,7 @@ async function start() {
       res.status(500).json({ error: 'db_error' });
     }
   });
-  const port = Number(process.env.PORT || 4000);
+  const port = Number(process.env.PORT || 5174);
   app.listen(port, () => {
     console.log(`server on :${port}`);
   });

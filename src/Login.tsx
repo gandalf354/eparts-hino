@@ -5,6 +5,7 @@ type Props = {
 };
 
 export default function Login({ onLoggedIn }: Props) {
+  const API_BASE = (import.meta.env.VITE_API_URL as string) || (location.port === '3200' ? `${location.protocol}//${location.hostname}:3300` : `${location.protocol}//${location.hostname}:5174`);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,7 +17,7 @@ export default function Login({ onLoggedIn }: Props) {
     setError(null);
     if (!username || !password) { setError("Isi username dan password"); return; }
     setLoading(true);
-    fetch("http://localhost:4000/api/login", {
+    fetch(`${API_BASE}/api/login`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
