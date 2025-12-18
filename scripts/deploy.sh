@@ -28,10 +28,14 @@ export ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-http://localhost:3200,http://localhos
 ACTION="${1:-deploy}"
 case "$ACTION" in
   deploy)
+    # Ensure uploads dir exists (supports external path via UPLOADS_DIR)
+    mkdir -p "${UPLOADS_DIR:-public/uploads}"
     $COMPOSE build
     $COMPOSE up -d --remove-orphans
     ;;
   rebuild)
+    # Ensure uploads dir exists (supports external path via UPLOADS_DIR)
+    mkdir -p "${UPLOADS_DIR:-public/uploads}"
     $COMPOSE down --remove-orphans --rmi local || true
     $COMPOSE build --no-cache
     $COMPOSE up -d --force-recreate --remove-orphans

@@ -17,7 +17,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./public/uploads:/app/public/uploads
+      - ${UPLOADS_DIR:-./public/uploads}:/app/public/uploads
     ports:
       - "3300:5174"
     restart: unless-stopped

@@ -21,8 +21,11 @@ jobs:
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
-          mkdir -p public/uploads
           printf "%s" "$ENV_FILE" > .env
+          set -a
+          . ./.env || true
+          set +a
+          mkdir -p "${UPLOADS_DIR:-public/uploads}"
       - name: Deploy with Docker Compose
         shell: bash
         run: bash scripts/deploy.sh rebuild
