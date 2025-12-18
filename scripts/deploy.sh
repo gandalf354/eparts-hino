@@ -32,6 +32,7 @@ case "$ACTION" in
     $COMPOSE up -d --remove-orphans
     ;;
   rebuild)
+    $COMPOSE down --remove-orphans --rmi local || true
     $COMPOSE build --no-cache
     $COMPOSE up -d --force-recreate --remove-orphans
     ;;
@@ -52,4 +53,3 @@ case "$ACTION" in
     exit 1
     ;;
 esac
-
