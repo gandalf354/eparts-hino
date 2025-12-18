@@ -43,14 +43,3 @@ jobs:
       - name: Deploy with Docker Compose
         shell: bash
         run: bash scripts/deploy.sh rebuild
-      - name: Seed database
-        if: ${{ secrets.RUN_SEED == 'true' }}
-        shell: bash
-        run: |
-          if docker compose version >/dev/null 2>&1; then
-            docker compose run --rm server node server/seed.js
-          elif command -v docker-compose >/dev/null 2>&1; then
-            docker-compose run --rm server node server/seed.js
-          else
-            exit 1
-          fi
