@@ -2,8 +2,10 @@ FROM node:20 AS build
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
+
+COPY package.json ./
+RUN pnpm install --frozen-lockfile=false
 
 COPY tsconfig.json vite.config.ts index.html ./
 COPY src ./src
@@ -13,8 +15,8 @@ COPY public ./public
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
 
-RUN npm run build
+RUN pnpm run build
 
 EXPOSE 5173
 
-CMD ["npm","run","preview","--","--host","0.0.0.0","--port","5173","--strictPort"]
+CMD ["pnpm","run","preview","--","--host","0.0.0.0","--port","5173","--strictPort"]

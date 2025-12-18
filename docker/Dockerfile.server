@@ -2,8 +2,10 @@ FROM node:20
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
+
+COPY package.json ./
+RUN pnpm install --frozen-lockfile=false --prod
 
 COPY server ./server
 COPY public ./public
