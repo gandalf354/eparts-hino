@@ -1,0 +1,41 @@
+# Node
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Builds
+dist/
+build/
+.vite/
+
+# Env & local config
+.env
+.env.local
+.env.*.local
+
+# OS/Editor
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Coverage / test
+coverage/
+
+# Uploads and generated assets
+public/uploads/
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+.cache/
+/.trae/

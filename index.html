@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Part Katalog</title>
+    <style>
+      html, body, #root { height: 100%; }
+      body { margin: 0; font-family: Inter, system-ui, Arial, sans-serif; }
+      .btn { appearance: none; border: 1px solid #d0d7de; background: #ffffff; color: #111827; border-radius: 8px; padding: 6px 12px; font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.06); cursor: pointer; transition: background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .02s ease; }
+      .btn:hover { background: #f6f8fa; border-color: #c5ccd3; }
+      .btn:active { transform: translateY(0.5px); }
+      .btn:disabled { opacity: .6; cursor: not-allowed; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+  </html>
